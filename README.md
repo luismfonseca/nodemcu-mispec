@@ -21,6 +21,10 @@ mispec.describe('A module', function(it)
       end)
       
       eventually(ko, 5, 1000) -- 5 times with 1s pauses it will run ko and fail
+      
+      eventually(ok) -- although it's possible to have several eventualities, execution order is not garanteed
+      
+      ok(true) -- this will also be executed potentially before those eventualities have passed
     end)
     
     it:should('have multiple tests', ok) -- they will be executed sequentially
