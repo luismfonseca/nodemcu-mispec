@@ -31,6 +31,10 @@ mispec.describe('A module', function(it)
 ):evaluate() -- run it!
 ```
 
+## Credits
+
+ * Serge Zaitsev, who wrote the eq function in [gambiarra](https://bitbucket.org/zserge/gambiarra/src/10c86d15d11908d24516495a4eb27049a257d6d7?at=default)
+
 ## Contributing
 
 Feel free to create issues and merge requests - I will ignore them and accept them, respectively.
