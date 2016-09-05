@@ -29,10 +29,10 @@ function eq(a, b)
     if a == b then return true end
     if type(a) ~= 'table' then return false end
     for k,v in pairs(a) do
-        if b[k] == nil or not deepeq(v, b[k]) then return false end
+        if b[k] == nil or not eq(v, b[k]) then return false end
     end
     for k,v in pairs(b) do
-        if a[k] == nil or not deepeq(v, a[k]) then return false end
+        if a[k] == nil or not eq(v, a[k]) then return false end
     end
     return true
 end
