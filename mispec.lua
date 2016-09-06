@@ -37,12 +37,10 @@ function eq(a, b)
     return true
 end
 
-function eventually(func, retries, delayMs, notfirstcall)
-    retries = retries or 10
-    delayMs = delayMs or 300
-
+local function eventuallyImpl(func, retries, delayMs)
     status, err = pcall(func)
-    if status and notfirstcall then
+    if status then
+        M.eventuallyPendingLength = M.eventuallyPendingLength - 1
         M.runNextPending()
     else
         if retries > 0 then
@@ -50,25 +48,34 @@ function eventually(func, retries, delayMs, notfirstcall)
             t:register(delayMs, 0, M.runNextPending)
             t:start()
 
-            table.insert(M.pending, 1, function() _G.eventually(func, retries - 1, delayMs, true) end)
-
-            if not notfirstcall then
-                table.insert(M.pending, 1, function() end) -- prevent running next spec
-            end
+            table.insert(M.pending, 1, function() eventuallyImpl(func, retries - 1, delayMs) end)
         else
             print("\n  ' it failed:", err)
-            if notfirstcall then M.runNextPending() end
+            M.eventuallyPendingLength = M.eventuallyPendingLength - 1
+            M.runNextPending()
         end
     end
 end
 
--- Module:
-M.pending = {}
-M.describe = function(name, itshoulds)
+function eventually(func, retries, delayMs)
+    retries = retries or 10
+    delayMs = delayMs or 300
+
+    M.eventuallyPendingLength = M.eventuallyPendingLength + 1
+
+    table.insert(M.pending, M.eventuallyPendingLength, function()
+        eventuallyImpl(func, retries, delayMs)
+    end)
+end
+
+function describe(name, itshoulds)
     M.name = name
     M.itshoulds = itshoulds
-    return M
 end
+
+-- Module:
+M.pending = {}
+M.eventuallyPendingLength = 0
 
 M.runNextPending = function()
     local next = table.remove(M.pending, 1)
@@ -80,7 +87,7 @@ M.runNextPending = function()
     end
 end
 
-M.evaluate = function()
+M.run = function()
     M.startTime = tmr.now()
     it = {}
     it.should = function(_, desc, func)
