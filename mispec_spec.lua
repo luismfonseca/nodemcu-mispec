@@ -36,6 +36,10 @@ describe('A mispec module', function(it)
 
     it:should('run a test that just fails', ko)
 
+    it:should('increase the count of failed test if one fails', function()
+        ok(mispec.failed == 1)
+    end)
+
     it:should('fail if andThen are nested', function()
         andThen(function() andThen(ok) end)
     end)

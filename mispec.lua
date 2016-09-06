@@ -51,6 +51,7 @@ local function eventuallyImpl(func, retries, delayMs)
 
             table.insert(M.pending, 1, function() eventuallyImpl(func, retries - 1, delayMs) end)
         else
+            M.failed = M.failed + 1
             print("\n  ' it failed:", err)
             M.queuedEventuallyCount = M.queuedEventuallyCount - 1
             M.runNextPending()
@@ -87,20 +88,27 @@ M.runNextPending = function()
     if next then
         node.task.post(next)
     else
+        M.succeeded = M.total - M.failed
         local elapsedSeconds = (tmr.now() - M.startTime) / 1000 / 1000
-        print(string.format('\n\nCompleted in %.2f seconds.', elapsedSeconds))
+        print(string.format(
+            '\n\nCompleted in %.2f seconds. Success rate is %.1f%% (%d failed out of %d).',
+            elapsedSeconds, 100 * M.succeeded / M.total, M.failed, M.total))
     end
 end
 
 M.run = function()
     M.startTime = tmr.now()
+    M.total = 0
+    M.failed = 0
     local it = {}
     it.should = function(_, desc, func)
         table.insert(M.pending, function()
             uart.write(0, '\n  * ' .. desc)
+            M.total = M.total + 1
             local status, err = pcall(func)
             if not status then
                 print("\n  ' it failed:", err)
+                M.failed = M.failed + 1
             end
             M.runNextPending()
         end)
