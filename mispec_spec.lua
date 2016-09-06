@@ -19,11 +19,19 @@ describe('A mispec module', function(it)
     end)
 
     it:should('run a test that has several eventuallys in the correct order', function()
-        local t = ''
-        eventually(function() t = t .. 'a' ok(#t % 2 == 0) end)
-        eventually(function() t = t .. 'b' ok(#t % 2 == 0) end)
-        eventually(function() t = t .. 'c' ok(#t % 2 == 0) end)
-        eventually(function() ok(t == 'aabbcc') end)
+        local b = ''
+        eventually(function() b = b .. 'a' ok(eq(#b % 2, 0)) end)
+        eventually(function() b = b .. 'b' ok(eq(#b % 2, 0)) end)
+        eventually(function() b = b .. 'c' ok(eq(#b % 2, 0)) end)
+
+        eventually(function() ok(b == 'aabbcc') end)
+    end)
+
+    it:should('run a test with andThen function to chain logic', function()
+        local c = ''
+        eventually(function() c = c .. 'a' ok(eq(#c % 3, 0)) end)
+        andThen(function() c = c .. 'once' end)
+        andThen(function() ok(c == 'aaaonce') end)
     end)
 
     it:should('run a test that just fails', ko)

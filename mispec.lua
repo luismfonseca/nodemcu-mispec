@@ -68,6 +68,10 @@ function eventually(func, retries, delayMs)
     end)
 end
 
+function andThen(func)
+    eventually(func, 0, 0)
+end
+
 function describe(name, itshoulds)
     M.name = name
     M.itshoulds = itshoulds
