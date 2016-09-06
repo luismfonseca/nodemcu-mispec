@@ -34,7 +34,7 @@ describe('A mispec module', function(it)
         andThen(function() ok(c == 'aaaonce') end)
     end)
 
-    it:should('run a test that just fails', ko)
+    it:should('run a test that just fails', function() ok(eq(1, -1)) end)
 
     it:should('increase the count of failed test if one fails', function()
         ok(mispec.failed == 1)

@@ -20,12 +20,16 @@ function ko(expression, desc)
 end
 
 function eq(a, b)
-    if type(a) ~= type(b) then return false end
+    if type(a) ~= type(b) then
+        error('type ' .. type(a) .. ' is not equal to ' .. type(b))
+    end
     if type(a) == 'function' then
         return string.dump(a) == string.dump(b)
     end
     if a == b then return true end
-    if type(a) ~= 'table' then return false end
+    if type(a) ~= 'table' then
+        error(a .. ' is not equal to ' .. b)
+    end
     for k,v in pairs(a) do
         if b[k] == nil or not eq(v, b[k]) then return false end
     end
