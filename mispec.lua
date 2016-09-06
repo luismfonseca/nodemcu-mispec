@@ -41,7 +41,7 @@ end
 
 local function eventuallyImpl(func, retries, delayMs)
     local prevEventually = _G.eventually
-    _G.eventually = function() error("Can not nest eventually/andThen.") end
+    _G.eventually = function() error("Cannot nest eventually/andThen.") end
     local status, err = pcall(func)
     _G.eventually = prevEventually
     if status then
@@ -50,7 +50,7 @@ local function eventuallyImpl(func, retries, delayMs)
     else
         if retries > 0 then
             local t = tmr.create()
-            t:register(delayMs, 0, M.runNextPending)
+            t:register(delayMs, tmr.ALARM_SINGLE, M.runNextPending)
             t:start()
 
             table.insert(M.pending, 1, function() eventuallyImpl(func, retries - 1, delayMs) end)
