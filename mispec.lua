@@ -4,9 +4,7 @@ _G[moduleName] = M
 
 -- Helpers:
 function ok(expression, desc)
-    if expression == nil then
-        expression = true
-    end
+    if expression == nil then expression = true end
     desc = desc or 'expression is not ok'
     if not expression then
         error(desc .. '\n' .. debug.traceback())
@@ -14,11 +12,11 @@ function ok(expression, desc)
 end
 
 function ko(expression, desc)
-    if expression == nil then
-        expression = true
-    end
+    if expression == nil then expression = true end
     desc = desc or 'expression is not ko'
-    ok(not expression, desc)
+    if expression then
+        error(desc .. '\n' .. debug.traceback())
+    end
 end
 
 function eq(a, b)
