@@ -10,26 +10,53 @@ Also, being coupled to NodeMCU allows it to be a possibly better framework (i.e.
 ```lua
 require 'mispec'
 
-mispec.describe('A module', function(it)
+describe('A module', function(it)
     it:should('have a test', function()
       print('this is the body of the test')
       ok(1 == 1, 'one is equal to one')
-      ok(eq(true, true))
-      
+      ok(eq(true, true)) -- the eq function does a deep comparison
+
       eventually(function() -- will run this up to 10 times, with 300ms pauses between failures
         ok(math.random(10) < 7)
       end)
       
-      eventually(ko, 5, 1000) -- 5 times with 1s pauses it will run ko and fail
-      
-      eventually(ok) -- although it's possible to have several eventualities, execution order is not garanteed
-      
-      ok(true) -- this will also be executed potentially before those eventualities have passed
+      andThen(function() -- after the first eventually, this is necessary to chain events
+        ok(true)
+      end)
+
+      eventually(ko, 5, 1000) -- runs 5 times with 1s pauses, but fails since it's ko
+
+      -- any code here would be executed before the eventually/andThen!
     end)
     
     it:should('have multiple tests', ok) -- they will be executed sequentially
-):evaluate() -- run it!
+)
+
+mispec.run()
 ```
+
+And here's an example output:
+```lua
+A mispec module, it should:
+>
+  * run a test
+  * run multiple tests
+  * run a test that eventually passes
+  * run a test that has several eventuallys
+  * run a test that has several eventuallys in the correct order
+  * run a test with andThen function to chain logic
+  * run a test that just fails
+  ' it failed:  mispec.lua:12: expression is not ko
+stack traceback:
+  mispec.lua:12: in function 'ok'
+  mispec.lua:21: in function <mispec.lua:16>
+  [C]: in function 'pcall'
+  mispec.lua:100: in function <mispec.lua:98>
+
+
+Completed in 3.36 seconds.
+```
+
 
 ## Credits
 
