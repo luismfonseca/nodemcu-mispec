@@ -52,7 +52,8 @@ stack traceback:
   [C]: in function 'pcall'
   mispec.lua:100: in function <mispec.lua:98>
 
-Completed in 3.36 seconds. Success rate is 87.5% (1 failed out of 8).
+Completed in 3.36 seconds.
+Success rate is 87.5% (1 failed out of 8).
 ```
 
 

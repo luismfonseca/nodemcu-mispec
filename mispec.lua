@@ -91,7 +91,7 @@ M.runNextPending = function()
         M.succeeded = M.total - M.failed
         local elapsedSeconds = (tmr.now() - M.startTime) / 1000 / 1000
         print(string.format(
-            '\n\nCompleted in %.2f seconds. Success rate is %.1f%% (%d failed out of %d).',
+            '\n\nCompleted in %.2f seconds.\nSuccess rate is %.1f%% (%d failed out of %d).',
             elapsedSeconds, 100 * M.succeeded / M.total, M.failed, M.total))
     end
 end
