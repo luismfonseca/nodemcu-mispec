@@ -36,13 +36,16 @@ function eq(a, b)
 end
 
 local function eventuallyImpl(func, retries, delayMs)
-    status, err = pcall(func)
+    local prevEventually = _G.eventually
+    _G.eventually = function() error("Can not nest eventually/andThen.") end
+    local status, err = pcall(func)
+    _G.eventually = prevEventually
     if status then
         M.eventuallyPendingLength = M.eventuallyPendingLength - 1
         M.runNextPending()
     else
         if retries > 0 then
-            t = tmr.create()
+            local t = tmr.create()
             t:register(delayMs, 0, M.runNextPending)
             t:start()
 
@@ -91,7 +94,7 @@ end
 
 M.run = function()
     M.startTime = tmr.now()
-    it = {}
+    local it = {}
     it.should = function(_, desc, func)
         table.insert(M.pending, function()
             uart.write(0, '\n  * ' .. desc)
