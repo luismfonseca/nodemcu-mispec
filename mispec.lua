@@ -41,7 +41,7 @@ local function eventuallyImpl(func, retries, delayMs)
     local status, err = pcall(func)
     _G.eventually = prevEventually
     if status then
-        M.eventuallyPendingLength = M.eventuallyPendingLength - 1
+        M.queuedEventuallyCount = M.queuedEventuallyCount - 1
         M.runNextPending()
     else
         if retries > 0 then
@@ -52,7 +52,7 @@ local function eventuallyImpl(func, retries, delayMs)
             table.insert(M.pending, 1, function() eventuallyImpl(func, retries - 1, delayMs) end)
         else
             print("\n  ' it failed:", err)
-            M.eventuallyPendingLength = M.eventuallyPendingLength - 1
+            M.queuedEventuallyCount = M.queuedEventuallyCount - 1
             M.runNextPending()
         end
     end
@@ -62,9 +62,9 @@ function eventually(func, retries, delayMs)
     retries = retries or 10
     delayMs = delayMs or 300
 
-    M.eventuallyPendingLength = M.eventuallyPendingLength + 1
+    M.queuedEventuallyCount = M.queuedEventuallyCount + 1
 
-    table.insert(M.pending, M.eventuallyPendingLength, function()
+    table.insert(M.pending, M.queuedEventuallyCount, function()
         eventuallyImpl(func, retries, delayMs)
     end)
 end
@@ -80,7 +80,7 @@ end
 
 -- Module:
 M.pending = {}
-M.eventuallyPendingLength = 0
+M.queuedEventuallyCount = 0
 
 M.runNextPending = function()
     local next = table.remove(M.pending, 1)
