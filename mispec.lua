@@ -56,7 +56,7 @@ local function eventuallyImpl(func, retries, delayMs)
             table.insert(M.pending, 1, function() eventuallyImpl(func, retries - 1, delayMs) end)
         else
             M.failed = M.failed + 1
-            print("\n  ' it failed:", err)
+            print("\n  ! it failed:", err)
             M.queuedEventuallyCount = M.queuedEventuallyCount - 1
             M.runNextPending()
         end
@@ -111,7 +111,7 @@ M.run = function()
             M.total = M.total + 1
             local status, err = pcall(func)
             if not status then
-                print("\n  ' it failed:", err)
+                print("\n  ! it failed:", err)
                 M.failed = M.failed + 1
             end
             M.runNextPending()

@@ -46,7 +46,7 @@ A mispec module, it should:
   * run a test that has several eventuallys in the correct order
   * run a test with andThen function to chain logic
   * run a test that just fails
-  ' it failed:  mispec.lua:18: expression is not ko
+  ! it failed:  mispec.lua:18: expression is not ko
 stack traceback:
   mispec.lua:18: in function 'ko'
   [C]: in function 'pcall'
