@@ -126,4 +126,7 @@ M.run = function()
 
     print('' .. M.name .. ', it should:')
     M.runNextPending()
+
+    M.itshoulds = nil
+    M.name = nil
 end
