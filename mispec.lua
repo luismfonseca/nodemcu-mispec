@@ -28,7 +28,7 @@ function eq(a, b)
     end
     if a == b then return true end
     if type(a) ~= 'table' then
-        error(a .. ' is not equal to ' .. b .. '\n' .. debug.traceback())
+        error(tostring(a) .. ' is not equal to ' .. tostring(b) .. '\n' .. debug.traceback())
     end
     for k,v in pairs(a) do
         if b[k] == nil or not eq(v, b[k]) then return false end
