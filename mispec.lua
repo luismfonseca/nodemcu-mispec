@@ -57,7 +57,12 @@ local function eventuallyImpl(func, retries, delayMs)
         else
             M.failed = M.failed + 1
             print("\n  ! it failed:", err)
-            M.queuedEventuallyCount = M.queuedEventuallyCount - 1
+
+            -- remove all pending eventuallies as spec has failed at this point
+            for i = 1, M.queuedEventuallyCount - 1 do
+                table.remove(M.pending, 1)
+            end
+            M.queuedEventuallyCount = 0
             M.runNextPending()
         end
     end
