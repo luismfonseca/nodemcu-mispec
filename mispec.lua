@@ -1,4 +1,4 @@
-local moduleName = ...
+local moduleName = ... or 'mispec'
 local M = {}
 _G[moduleName] = M
 
