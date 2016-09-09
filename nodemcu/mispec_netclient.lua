@@ -19,6 +19,7 @@ describe('The net module (client)', function(it)
         sk:dns('www.example.com', function(_, ip) resolvedIp = ip end)
 
         eventually(function() ok(resolvedIp ~= nil) end)
+        andThen(function() sk = nil end)
     end)
 
     it:should('connect to remote host via TCP', function()
@@ -29,7 +30,7 @@ describe('The net module (client)', function(it)
 
         eventually(function() ok(eq(connected, true)) end)
 
-        andThen(function() sk:close() end)
+        andThen(function() sk:close() sk = nil end)
     end)
 
     it:should('communicate to remote host via TCP with TLS', function()

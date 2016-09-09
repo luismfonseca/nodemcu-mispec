@@ -89,23 +89,25 @@ function describe(name, itshoulds)
 end
 
 -- Module:
-M.pending = {}
-M.queuedEventuallyCount = 0
-
 M.runNextPending = function()
     local next = table.remove(M.pending, 1)
     if next then
         node.task.post(next)
+        next = nil
     else
         M.succeeded = M.total - M.failed
         local elapsedSeconds = (tmr.now() - M.startTime) / 1000 / 1000
         print(string.format(
             '\n\nCompleted in %.2f seconds.\nSuccess rate is %.1f%% (%d failed out of %d).',
             elapsedSeconds, 100 * M.succeeded / M.total, M.failed, M.total))
+        M.pending = nil
+        M.queuedEventuallyCount = nil
     end
 end
 
 M.run = function()
+    M.pending = {}
+    M.queuedEventuallyCount = 0
     M.startTime = tmr.now()
     M.total = 0
     M.failed = 0
