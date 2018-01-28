@@ -98,8 +98,8 @@ M.runNextPending = function()
         M.succeeded = M.total - M.failed
         local elapsedSeconds = (tmr.now() - M.startTime) / 1000 / 1000
         print(string.format(
-            '\n\nCompleted in %.2f seconds.\nSuccess rate is %.1f%% (%d failed out of %d).',
-            elapsedSeconds, 100 * M.succeeded / M.total, M.failed, M.total))
+            '\n\nCompleted in %.2f seconds.\nSuccess rate is %.1f%% (failed:%d, skipped:%d, total:%d).',
+            elapsedSeconds, 100 * M.succeeded / M.total, M.failed, M.skipped, M.total))
         M.pending = nil
         M.queuedEventuallyCount = nil
     end
@@ -111,15 +111,23 @@ M.run = function()
     M.startTime = tmr.now()
     M.total = 0
     M.failed = 0
+    M.skipped = 0
     local it = {}
     it.should = function(_, desc, func)
         table.insert(M.pending, function()
+            local count
             uart.write(0, '\n  * ' .. desc)
             M.total = M.total + 1
             local status, err = pcall(func)
             if not status then
-                print("\n  ! it failed:", err)
-                M.failed = M.failed + 1
+                err, count = err:gsub("mispec_skip:", "", 1)
+                if count == 1 then
+                    print("n     skipped: ", err)
+                    M.skipped = M.skipped + 1
+                else
+                    print("\n  ! it failed:", err)
+                    M.failed = M.failed + 1
+                end
             end
             M.runNextPending()
         end)
