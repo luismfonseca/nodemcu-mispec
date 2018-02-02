@@ -88,6 +88,10 @@ function M.describe(name, itshoulds)
     M.itshoulds = itshoulds
 end
 
+function M.skip(reason)
+    return error("mispec_skip:" .. reason)
+end
+
 -- Module:
 function M.runNextPending()
     local next = table.remove(M.pending, 1)
@@ -97,14 +101,27 @@ function M.runNextPending()
     else
         M.succeeded = M.total - M.failed
         local elapsedSeconds = (tmr.now() - M.startTime) / 1000 / 1000
-        print(string.format(
-            '\n\nCompleted in %.2f seconds.\nSuccess rate is %.1f%% (failed:%d, skipped:%d, total:%d).',
-            elapsedSeconds, 100 * M.succeeded / M.total, M.failed, M.skipped, M.total))
+        if M.float_build then
+            print(string.format(
+                '\n\nCompleted in %.2f seconds.\nSuccess rate is %.1f%% (failed:%d, skipped:%d, total:%d).',
+                elapsedSeconds, 100 * M.succeeded / M.total, M.failed, M.skipped, M.total))
+        else
+            print(string.format(
+                '\n\nCompleted in %d seconds.\nSuccess rate is %d%% (failed:%d, skipped:%d, total:%d).',
+                elapsedSeconds, 100 * M.succeeded / M.total, M.failed, M.skipped, M.total))
+        end
         M.pending = nil
         M.queuedEventuallyCount = nil
         package.loaded.mispec = nil
         mispec = nil
     end
+end
+
+
+local function check_float()
+    local f = function() return string.format("%f",0) end
+    status, err = pcall(f)
+    return status
 end
 
 function M.run()
@@ -114,6 +131,7 @@ function M.run()
     M.total = 0
     M.failed = 0
     M.skipped = 0
+    M.float_build = check_float()
     local it = {}
     it.should = function(_, desc, func)
         table.insert(M.pending, function()
@@ -124,7 +142,7 @@ function M.run()
             if not status then
                 err, count = err:gsub("mispec_skip:", "", 1)
                 if count == 1 then
-                    print("n     skipped: ", err)
+                    print("\n    skipped: ", err)
                     M.skipped = M.skipped + 1
                 else
                     print("\n  ! it failed:", err)

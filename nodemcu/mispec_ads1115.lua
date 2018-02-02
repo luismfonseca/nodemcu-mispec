@@ -22,10 +22,17 @@ mispec.describe('The ads1115 module', function(it)
         ads1115.reset()
         local adc1 = ads1115.ads1015(0, ads1115.ADDR_GND)
         adc1:setting(ads1115.GAIN_6_144V, ads1115.DR_3300SPS, ads1115.DIFF_0_3, ads1115.CONTINUOUS)
-        local volt, volt_dec, raw = adc1:read()
+        local volt, volt_dec, raw, sign = adc1:read()
         mispec.ok(volt ~= nil, "missing volt")
-        mispec.ok(volt_dec ~= nil, "missing volt_dec")
         mispec.ok(raw ~= nil, "missing raw")
+        if mispec.float_build then
+            mispec.ok(volt_dec == nil, "volt_dec not nil")
+            mispec.ok(sign == nil, "sing not nil")
+        else
+            mispec.ok(volt_dec ~= nil, "volt_dec is nil")
+            mispec.ok(sign ~= nil, "sing is nil")
+        end
+
     end)
 
     it:should("handle 2 devices", function()
@@ -36,14 +43,26 @@ mispec.describe('The ads1115 module', function(it)
         local adc2 = ads1115.ads1115(0, ads1115.ADDR_VDD)
         adc1:setting(ads1115.GAIN_6_144V, ads1115.DR_3300SPS, ads1115.DIFF_0_3, ads1115.CONTINUOUS)
         adc2:setting(ads1115.GAIN_6_144V, ads1115.DR_128SPS, ads1115.DIFF_0_3, ads1115.CONTINUOUS)
-        local volt1, volt_dec1, raw1 = adc1:read()
+        local volt1, volt_dec1, raw1, sign1 = adc1:read()
         mispec.ok(volt1 ~= nil, "missing volt")
-        mispec.ok(volt_dec1 ~= nil, "missing volt_dec")
         mispec.ok(raw1 ~= nil, "missing raw")
-        local volt2, volt_dec2, raw2 = adc2:read()
-        mispec.ok(volt1 ~= nil, "missing volt")
-        mispec.ok(volt_dec1 ~= nil, "missing volt_dec")
-        mispec.ok(raw1 ~= nil, "missing raw")
+        if mispec.float_build then
+            mispec.ok(volt_dec1 == nil, "volt_dec not nil")
+            mispec.ok(sign1 == nil, "sing not nil")
+        else
+            mispec.ok(volt_dec1 ~= nil, "volt_dec is nil")
+            mispec.ok(sign1 ~= nil, "sing is nil")
+        end
+        local volt2, volt_dec2, raw2, sign2 = adc2:read()
+        mispec.ok(volt2 ~= nil, "missing volt")
+        mispec.ok(raw2 ~= nil, "missing raw")
+        if mispec.float_build then
+            mispec.ok(volt_dec2 == nil, "volt_dec not nil")
+            mispec.ok(sign2 == nil, "sing not nil")
+        else
+            mispec.ok(volt_dec2 ~= nil, "volt_dec is nil")
+            mispec.ok(sign2 ~= nil, "sing is nil")
+        end
     end)
 
     it:should("read in single shot mode, 1 device", function()
@@ -53,21 +72,27 @@ mispec.describe('The ads1115 module', function(it)
         local adc1 = ads1115.ads1015(id, ads1115.ADDR_GND)
         adc1:setting(ads1115.GAIN_6_144V, ads1115.DR_3300SPS, ads1115.DIFF_0_3, ads1115.SINGLE_SHOT)
         local called = false
-        local p1, p2, p3
-        adc1:startread(function(volt, volt_dec, adc)
+        local p1, p2, p3, p4
+        adc1:startread(function(volt, volt_dec, adc, sign)
             called = true
             p1 = volt
             p2 = volt_dec
             p3 = adc
+            p4 = sign
         end)
         mispec.eventually(function()
             mispec.ok(called == true, "missing callback")
             mispec.ok(p1 ~= nil, "missing volt")
-            mispec.ok(p2 ~= nil, "missing volt_dec")
             mispec.ok(p3 ~= nil, "missing raw")
+            if mispec.float_build then
+                mispec.ok(p2 == nil, "volt_dec not nil")
+                mispec.ok(p4 == nil, "sing not nil")
+            else
+                mispec.ok(p2 ~= nil, "volt_dec is nil")
+                mispec.ok(p4 ~= nil, "sing is nil")
+            end
         end)
     end)
-
 
     it:should("cleanup timer when deallocated", function()
         local id, scl, sda, alert_pin = 0, 1, 2, 3
@@ -76,7 +101,7 @@ mispec.describe('The ads1115 module', function(it)
         local adc2 = ads1115.ads1115(id, ads1115.ADDR_VDD)
         adc2:setting(ads1115.GAIN_6_144V, ads1115.DR_8SPS, ads1115.DIFF_0_3, ads1115.SINGLE_SHOT)
         local called = false
-        adc2:startread(function(volt, volt_dec, adc)
+        adc2:startread(function(volt, volt_dec, adc, sign)
             called = true
         end)
         local wait = true
@@ -92,7 +117,6 @@ mispec.describe('The ads1115 module', function(it)
         adc2 = nil
     end)
 
-
     it:should("read in single shot mode with hardware conversion ready", function()
         local id, scl, sda, alert_pin = 0, 1, 2, 3
         i2c.setup(id, sda, scl, i2c.SLOW)
@@ -100,10 +124,10 @@ mispec.describe('The ads1115 module', function(it)
         local adc1 = ads1115.ads1015(id, ads1115.ADDR_GND)
         adc1:setting(ads1115.GAIN_6_144V, ads1115.DR_128SPS, ads1115.DIFF_0_3, ads1115.SINGLE_SHOT, ads1115.CONV_RDY_1)
         local called = false
-        local volt, volt_dec, adc
+        local volt, volt_dec, adc, sign
         local function conversion_ready(level, when)
             gpio.trig(alert_pin)
-            volt, volt_dec, adc = adc1:read()
+            volt, volt_dec, adc, sign = adc1:read()
             called = true
         end
         gpio.mode(alert_pin, gpio.INT)
@@ -112,11 +136,16 @@ mispec.describe('The ads1115 module', function(it)
         mispec.eventually(function()
             mispec.ok(called == true, "missing callback")
             mispec.ok(volt ~= nil, "missing volt")
-            mispec.ok(volt_dec ~= nil, "missing volt_dec")
             mispec.ok(adc ~= nil, "missing raw")
+            if mispec.float_build then
+                mispec.ok(volt_dec == nil, "volt_dec not nil")
+                mispec.ok(sign == nil, "sing not nil")
+            else
+                mispec.ok(volt_dec ~= nil, "volt_dec is nil")
+                mispec.ok(sign ~= nil, "sing is nil")
+            end
         end)
     end)
-
 
     it:should("trigger when input value is out of range (window)", function()
         local id, scl, sda, alert_pin = 0, 1, 2, 3
@@ -125,9 +154,9 @@ mispec.describe('The ads1115 module', function(it)
         local adc1 = ads1115.ads1015(id, ads1115.ADDR_GND)
         adc1:setting(ads1115.GAIN_1_024V, ads1115.DR_128SPS, ads1115.DIFF_0_3, ads1115.CONTINUOUS, ads1115.COMP_1CONV, -15, 100, ads1115.CMODE_WINDOW)
         local triggered = false
-        local volt, volt_dec, adc
+        local volt, volt_dec, adc, sign
         local function comparator_trigger(level, when)
-            volt, volt_dec, adc = adc1:read()
+            volt, volt_dec, adc, sign = adc1:read()
             gpio.trig(alert_pin)
             triggered = true
         end
@@ -135,9 +164,10 @@ mispec.describe('The ads1115 module', function(it)
         gpio.trig(alert_pin, "down", comparator_trigger)
     end)
 
+
     it:should("trigger when input value is out of range (window) - complete", function()
         if _G["mcp4725"] == nil then
-            return error("mispec skip: mcp4725 module is missing")
+            return M.skip("mcp4725 module is missing")
         end
         local id, scl, sda, alert_pin = 0, 1, 2, 3
         i2c.setup(id, sda, scl, i2c.SLOW)
@@ -148,9 +178,9 @@ mispec.describe('The ads1115 module', function(it)
         adc1:setting(ads1115.GAIN_1_024V, ads1115.DR_128SPS, ads1115.DIFF_0_3, ads1115.CONTINUOUS,
                      ads1115.COMP_1CONV, -500, 500, ads1115.CMODE_WINDOW)
         local triggered = false
-        local volt, volt_dec, adc
+        local volt, volt_dec, adc, sign
         local function comparator_trigger(level, when)
-            volt, volt_dec, adc = adc1:read()
+            volt, volt_dec, adc, sign = adc1:read()
             gpio.trig(alert_pin)
             triggered = true
         end
@@ -172,8 +202,14 @@ mispec.describe('The ads1115 module', function(it)
         mispec.eventually(function()
             mispec.ok(triggered == true, "missing trigger")
             mispec.ok(volt ~= nil, "missing volt")
-            mispec.ok(volt_dec ~= nil, "missing volt_dec")
             mispec.ok(adc ~= nil, "missing raw")
+            if mispec.float_build then
+                mispec.ok(volt_dec == nil, "volt_dec not nil")
+                mispec.ok(sign == nil, "sing not nil")
+            else
+                mispec.ok(volt_dec ~= nil, "volt_dec is nil")
+                mispec.ok(sign ~= nil, "sing is nil")
+            end
         end, 1, 250)
     end)
 
