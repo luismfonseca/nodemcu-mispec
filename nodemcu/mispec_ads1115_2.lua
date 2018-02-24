@@ -66,7 +66,7 @@ mispec.describe('The ads1115 module', function(it)
 
     it:should("trigger when input value is out of range (window) - complete", function()
         if _G["mcp4725"] == nil then
-            return M.skip("mcp4725 module is missing")
+            return mispec.skip("mcp4725 module is missing")
         end
         local id, scl, sda, alert_pin = 0, 1, 2, 3
         i2c.setup(id, sda, scl, i2c.SLOW)
