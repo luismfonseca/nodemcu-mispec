@@ -161,4 +161,3 @@ function M.run()
     M.name = nil
 end
 
-return M
