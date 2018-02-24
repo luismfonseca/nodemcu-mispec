@@ -10,26 +10,26 @@ Also, being coupled to NodeMCU allows it to be a possibly better framework (i.e.
 ```lua
 require 'mispec'
 
-describe('A module', function(it)
+mispec.describe('A module', function(it)
     it:should('have a test', function()
       print('this is the body of the test')
-      ok(1 == 1, 'one is equal to one')
-      ok(eq(true, true)) -- the eq function does a deep comparison
+      mispec.ok(1 == 1, 'one is equal to one')
+      mispec.ok(mispec.eq(true, true)) -- the eq function does a deep comparison
 
-      eventually(function() -- will run this up to 10 times, with 300ms pauses between failures
-        ok(math.random(10) < 7)
-      end)
-      
-      andThen(function() -- after the first eventually, this is necessary to chain events
-        ok(true)
+      mispec.eventually(function() -- will run this up to 10 times, with 300ms pauses between failures
+        mispec.ok(math.random(10) < 7)
       end)
 
-      eventually(ko, 5, 1000) -- runs 5 times with 1s pauses, but fails since it's ko
+      mispec.andThen(function() -- after the first eventually, this is necessary to chain events
+        mispec.ok(true)
+      end)
+
+      mispec.eventually(mispec.ko, 5, 1000) -- runs 5 times with 1s pauses, but fails since it's ko
 
       -- any code here would be executed before the eventually/andThen!
     end)
-    
-    it:should('have multiple tests', ok) -- they will be executed sequentially
+
+    it:should('have multiple tests', mispec.ok) -- they will be executed sequentially
 )
 
 mispec.run()

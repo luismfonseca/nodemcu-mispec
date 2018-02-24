@@ -3,7 +3,7 @@ local M = {}
 _G[moduleName] = M
 
 -- Helpers:
-function ok(expression, desc)
+function M.ok(expression, desc)
     if expression == nil then expression = true end
     desc = desc or 'expression is not ok'
     if not expression then
@@ -11,7 +11,7 @@ function ok(expression, desc)
     end
 end
 
-function ko(expression, desc)
+function M.ko(expression, desc)
     if expression == nil then expression = true end
     desc = desc or 'expression is not ko'
     if expression then
@@ -19,7 +19,7 @@ function ko(expression, desc)
     end
 end
 
-function eq(a, b)
+function M.eq(a, b)
     if type(a) ~= type(b) then
         error('type ' .. type(a) .. ' is not equal to ' .. type(b) .. '\n' .. debug.traceback())
     end
@@ -40,10 +40,10 @@ function eq(a, b)
 end
 
 local function eventuallyImpl(func, retries, delayMs)
-    local prevEventually = _G.eventually
-    _G.eventually = function() error("Cannot nest eventually/andThen.") end
+    local prevEventually = M.eventually
+    M.eventually = function() error("Cannot nest eventually/andThen.") end
     local status, err = pcall(func)
-    _G.eventually = prevEventually
+    M.eventually = prevEventually
     if status then
         M.queuedEventuallyCount = M.queuedEventuallyCount - 1
         M.runNextPending()
@@ -68,7 +68,7 @@ local function eventuallyImpl(func, retries, delayMs)
     end
 end
 
-function eventually(func, retries, delayMs)
+function M.eventually(func, retries, delayMs)
     retries = retries or 10
     delayMs = delayMs or 300
 
@@ -79,17 +79,21 @@ function eventually(func, retries, delayMs)
     end)
 end
 
-function andThen(func)
-    eventually(func, 0, 0)
+function M.andThen(func)
+    M.eventually(func, 0, 0)
 end
 
-function describe(name, itshoulds)
+function M.describe(name, itshoulds)
     M.name = name
     M.itshoulds = itshoulds
 end
 
+function M.skip(reason)
+    return error("mispec_skip:" .. reason)
+end
+
 -- Module:
-M.runNextPending = function()
+function M.runNextPending()
     local next = table.remove(M.pending, 1)
     if next then
         node.task.post(next)
@@ -97,29 +101,53 @@ M.runNextPending = function()
     else
         M.succeeded = M.total - M.failed
         local elapsedSeconds = (tmr.now() - M.startTime) / 1000 / 1000
-        print(string.format(
-            '\n\nCompleted in %.2f seconds.\nSuccess rate is %.1f%% (%d failed out of %d).',
-            elapsedSeconds, 100 * M.succeeded / M.total, M.failed, M.total))
+        if M.float_build then
+            print(string.format(
+                '\n\nCompleted in %.2f seconds.\nSuccess rate is %.1f%% (failed:%d, skipped:%d, total:%d).',
+                elapsedSeconds, 100 * M.succeeded / M.total, M.failed, M.skipped, M.total))
+        else
+            print(string.format(
+                '\n\nCompleted in %d seconds.\nSuccess rate is %d%% (failed:%d, skipped:%d, total:%d).',
+                elapsedSeconds, 100 * M.succeeded / M.total, M.failed, M.skipped, M.total))
+        end
         M.pending = nil
         M.queuedEventuallyCount = nil
+        package.loaded.mispec = nil
+        mispec = nil
     end
 end
 
-M.run = function()
+
+local function check_float()
+    local f = function() return string.format("%f",0) end
+    status, err = pcall(f)
+    return status
+end
+
+function M.run()
     M.pending = {}
     M.queuedEventuallyCount = 0
     M.startTime = tmr.now()
     M.total = 0
     M.failed = 0
+    M.skipped = 0
+    M.float_build = check_float()
     local it = {}
     it.should = function(_, desc, func)
         table.insert(M.pending, function()
+            local count
             uart.write(0, '\n  * ' .. desc)
             M.total = M.total + 1
             local status, err = pcall(func)
             if not status then
-                print("\n  ! it failed:", err)
-                M.failed = M.failed + 1
+                err, count = err:gsub("mispec_skip:", "", 1)
+                if count == 1 then
+                    print("\n    skipped: ", err)
+                    M.skipped = M.skipped + 1
+                else
+                    print("\n  ! it failed:", err)
+                    M.failed = M.failed + 1
+                end
             end
             M.runNextPending()
         end)
@@ -132,3 +160,4 @@ M.run = function()
     M.itshoulds = nil
     M.name = nil
 end
+
