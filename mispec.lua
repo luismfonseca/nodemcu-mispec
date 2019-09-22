@@ -39,6 +39,21 @@ function eq(a, b)
     return true
 end
 
+function fail(func, message)
+    local status, err = pcall(func)
+    if status then
+        local messagePart = ""
+        if message then
+            messagePart = " containing \"" .. message .. "\""
+        end
+        error("Error expected" .. messagePart .. '\n' .. debug.traceback())
+    end
+    if (message and not string.find(err, message)) then
+        error("expected errormessage \"" .. err .. "\" to contain \"" .. message .. "\"" .. '\n' .. debug.traceback() )
+    end
+    return true
+end
+
 local function eventuallyImpl(func, retries, delayMs)
     local prevEventually = _G.eventually
     _G.eventually = function() error("Cannot nest eventually/andThen.") end
