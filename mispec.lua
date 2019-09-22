@@ -28,13 +28,28 @@ function eq(a, b)
     end
     if a == b then return true end
     if type(a) ~= 'table' then
-        error(tostring(a) .. ' is not equal to ' .. tostring(b) .. '\n' .. debug.traceback())
+        error(string.format("%q",tostring(a)) .. ' is not equal to ' .. string.format("%q",tostring(b)) .. '\n' .. debug.traceback())
     end
     for k,v in pairs(a) do
         if b[k] == nil or not eq(v, b[k]) then return false end
     end
     for k,v in pairs(b) do
         if a[k] == nil or not eq(v, a[k]) then return false end
+    end
+    return true
+end
+
+function fail(func, message)
+    local status, err = pcall(func)
+    if status then
+        local messagePart = ""
+        if message then
+            messagePart = " containing \"" .. message .. "\""
+        end
+        error("Error expected" .. messagePart .. '\n' .. debug.traceback())
+    end
+    if (message and not string.find(err, message)) then
+        error("expected errormessage \"" .. err .. "\" to contain \"" .. message .. "\"" .. '\n' .. debug.traceback() )
     end
     return true
 end
